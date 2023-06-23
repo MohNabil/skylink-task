@@ -1,8 +1,13 @@
 import { useState } from "react";
-import "./App.css";
+import Layout from "./components/Layout";
+import Login from "./components/Login";
 
 function App() {
-  return <div className="flex items-center justify-center">Hello world</div>;
+  return (
+    <div className="flex justify-center items-center">
+      <Login />
+    </div>
+  );
 }
 
 export default App;
