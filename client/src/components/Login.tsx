@@ -3,9 +3,16 @@ import { Password } from "primereact/password";
 import { Card } from "primereact/card";
 import { classNames } from "primereact/utils";
 import { Button } from "primereact/button";
+import { ProgressSpinner } from "primereact/progressspinner";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useMutation } from "react-query";
+import { UserCredentials } from "../types/user";
+import { loginUserFn } from "../services/auth";
+import { useAuth } from "../hooks/useAuth";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 const schema = z.object({
   email: z.string().email({ message: "must be a vaild email format" }),
@@ -18,12 +25,25 @@ const schema = z.object({
     .regex(/^(?=.*[A-Z])(?=.*[^a-zA-Z]).+$/),
 });
 
-type UserCredentials = {
-  email: string;
-  password: string;
-};
-
 function Login() {
+  const { setToken } = useAuth();
+  const navigate = useNavigate();
+  const from = useLocation()?.state?.from?.pathname || "/";
+  const [error, setError] = useState("");
+  const { mutate, isLoading } = useMutation({
+    mutationFn: (values: UserCredentials) => loginUserFn(values),
+    onSuccess: (data: string) => {
+      setToken(data);
+      localStorage.setItem("token", data);
+      navigate(from, { replace: true });
+    },
+    onError: (error: any) => {
+      setError(error.response.data.error);
+      setTimeout(() => {
+        setError("");
+      }, 2000);
+    },
+  });
   const {
     handleSubmit,
     control,
@@ -36,8 +56,11 @@ function Login() {
     resolver: zodResolver(schema),
   });
 
-  const onSubmit: SubmitHandler<UserCredentials> = (data: UserCredentials) =>
-    console.log(data);
+  const onSubmit: SubmitHandler<UserCredentials> = (
+    userData: UserCredentials
+  ) => {
+    mutate(userData);
+  };
 
   const getFormErrorMessage = (name: string) => {
     return errors[name] ? (
@@ -49,6 +72,7 @@ function Login() {
 
   return (
     <div className="w-1/2">
+      {isLoading && <div>Loading...</div>}
       <Card title="Login">
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -90,8 +114,15 @@ function Login() {
               )}
             />
           </div>
+          {error && (
+            <div className="flex justify-center text-red-400">{error}</div>
+          )}
           <div className="mt-6">
-            <Button label="Login" type="submit" />
+            {isLoading ? (
+              <ProgressSpinner style={{ width: "50px", height: "50px" }} />
+            ) : (
+              <Button label="Login" type="submit" />
+            )}
           </div>
         </form>
       </Card>
