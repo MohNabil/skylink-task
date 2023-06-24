@@ -1,7 +1,14 @@
-import React from "react";
+type MainContentProps = {
+  children: React.ReactNode;
+};
 
-function MainContent() {
-  return <div>MainContent</div>;
+function MainContent({ children }: MainContentProps) {
+  return (
+    <div>
+      <p>MainContent</p>
+      {children}
+    </div>
+  );
 }
 
 export default MainContent;

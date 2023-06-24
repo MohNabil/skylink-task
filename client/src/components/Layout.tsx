@@ -1,3 +1,4 @@
+import { Outlet } from "react-router-dom";
 import MainContent from "./MainContent";
 import SideBar from "./SideBar";
 
@@ -8,7 +9,9 @@ function Layout() {
         <SideBar />
       </div>
       <div className="border border-white border-l-0 p-4">
-        <MainContent />
+        <MainContent>
+          <Outlet />
+        </MainContent>
       </div>
     </div>
   );
