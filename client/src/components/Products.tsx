@@ -1,4 +1,4 @@
-import { DataTable } from "primereact/datatable";
+import { DataTable, DataTableRowEditCompleteEvent } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { Rating } from "primereact/rating";
 import { Tag } from "primereact/tag";
@@ -6,16 +6,53 @@ import { Product } from "../types/product";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { InputText } from "primereact/inputtext";
 import { InputNumber } from "primereact/inputnumber";
-import { useQuery } from "react-query";
-import { getProducts } from "../services/products";
+import { useMutation, useQuery } from "react-query";
+import {
+  getProducts,
+  searchProducts,
+  updateProduct,
+} from "../services/products";
+import { useState } from "react";
+import useDebounce from "../hooks/useDebounce";
 
 function Products() {
+  const [searchQuery, setSearchQuery] = useState("");
   const { data, isLoading, isError } = useQuery({
     queryKey: "products",
     queryFn: getProducts,
   });
+  const debouncedVal = useDebounce(searchQuery, 500);
+  const { data: searchData } = useQuery({
+    queryKey: ["products", debouncedVal],
+    queryFn: () => searchProducts(debouncedVal),
+  });
+  const { mutate } = useMutation({
+    mutationFn: (id: string, product: Product) => {
+      // console.log(product, "product");
+      // console.log(id, "id");
 
-  const onRowEditComplete = () => {};
+      updateProduct(id, product);
+    },
+    onSuccess: (product: Product) => {
+      const productId = product?.id;
+      data[productId] = product;
+    },
+    onError: (error: any) => {
+      console.log(error, "error");
+    },
+  });
+
+  const onSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const onRowEditComplete = (e: DataTableRowEditCompleteEvent) => {
+    let { newData } = e;
+
+    console.log(newData, "newData");
+
+    mutate(newData.id, newData);
+  };
 
   const formatCurrency = (value: number) => {
     return value.toLocaleString("en-US", {
@@ -47,20 +84,21 @@ function Products() {
   };
 
   const header = (
-    <div className="flex flex-wrap align-items-center justify-content-between gap-2">
+    <div className="flex  items-center justify-between">
       <span className="text-xl text-900 font-bold">Products</span>
+      <InputText value={searchQuery} onChange={onSearch} placeholder="Search" />
     </div>
   );
   const footer = `In total there are ${data ? data.length : 0} products.`;
 
   const textEditor = (options) => {
-    console.log(options, "options");
-
     return (
       <InputText
         type="text"
         value={options.value}
-        onChange={(e) => options.editorCallback(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+          options.editorCallback(e.target.value)
+        }
       />
     );
   };
@@ -86,7 +124,7 @@ function Products() {
       ) : (
         <div className="card">
           <DataTable
-            value={data}
+            value={searchData || data}
             header={header}
             footer={footer}
             tableStyle={{ minWidth: "60rem" }}
@@ -98,16 +136,12 @@ function Products() {
             onRowEditComplete={onRowEditComplete}
           >
             <Column
-              field="name"
+              field="title"
               header="Name"
               body={nameBodyTemplate}
               editor={(options) => textEditor(options)}
             ></Column>
-            <Column
-              header="Image"
-              body={imageBodyTemplate}
-              editor={(options) => textEditor(options)}
-            ></Column>
+            <Column header="Image" body={imageBodyTemplate}></Column>
             <Column
               field="price"
               header="Price"
@@ -126,6 +160,7 @@ function Products() {
               editor={(options) => textEditor(options)}
             ></Column>
             <Column
+              field="stock"
               header="Stock"
               body={statusBodyTemplate}
               editor={(options) => textEditor(options)}
