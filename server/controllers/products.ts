@@ -1,4 +1,4 @@
-import { RequestHandler } from "express";
+import { RequestHandler, Request, Response } from "express";
 import { productSchema } from "../models/products";
 
 // Example data for products
@@ -112,7 +112,7 @@ export const addProduct: RequestHandler = (req, res) => {
 };
 
 // Route to upload an image and return the URL
-export const upload = (req: any, res: any) => {
-  const url = `/uploads/${req.file.filename}`;
+export const upload = (req: Request, res: Response) => {
+  const url = `/uploads/${req?.file?.filename}`;
   res.json({ url });
 };

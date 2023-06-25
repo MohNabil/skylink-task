@@ -90,6 +90,7 @@ export const addProduct = (req, res) => {
 };
 // Route to upload an image and return the URL
 export const upload = (req, res) => {
-    const url = `/uploads/${req.file.filename}`;
+    var _a;
+    const url = `/uploads/${(_a = req === null || req === void 0 ? void 0 : req.file) === null || _a === void 0 ? void 0 : _a.filename}`;
     res.json({ url });
 };

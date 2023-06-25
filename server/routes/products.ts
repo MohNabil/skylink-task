@@ -1,4 +1,4 @@
-import express, { RequestHandler } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import {
   addProduct,
   deleteProduct,
@@ -13,7 +13,11 @@ const uploadImage = multer({ dest: "uploads/" });
 const productsRouter = express.Router();
 
 // Middleware to authenticate API calls
-export const authenticate: RequestHandler = (req, res, next) => {
+export const authenticate = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const token = req.headers.authorization;
   if (token && token === "Bearer mysecrettoken") {
     next();
